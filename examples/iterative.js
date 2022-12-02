@@ -40,22 +40,13 @@ function getRapier() {
   return RAPIER.init().then(() => RAPIER);
 }
 
+init();
 
-// import('@dimforge/rapier3d-compat').then(RAPIER => {
-
-	init();
-
-// });
+const params = {
+	brushShape: 'box',
+};
 
 async function init() {
-
-	// let src = "https://cdn.skypack.dev/@dimforge/rapier3d-compat";
-    // import(src).then(
-	// 	(RAPIER) => RAPIER.init()
-	// )
-      // (canvas) => console.log(canvas)
-
-	// await RAPIER.init();
 
 	await getRapier();
 
@@ -66,7 +57,6 @@ async function init() {
 
 	let floor = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -2.6, 0));
 	let floorCollider = world.createCollider(RAPIER.ColliderDesc.cuboid(10, 0.1, 10), floor);
-
 
 	// renderer setup
 	renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -106,28 +96,16 @@ async function init() {
 	} );
 	scene.add( transformControls );
 
-	// const size = 20;
-	// const divisions = 10;
-	// const gridHelper = new THREE.GridHelper( size, divisions );
-	// gridHelper.position.y = -2.5;
-	// scene.add( gridHelper );
-
-	// bunny mesh has no UVs so skip that attribute
 	csgEvaluator = new Evaluator();
 	csgEvaluator.attributes = [ 'position' ];
 
 	brush1 = new Brush( new THREE.BoxGeometry(), new THREE.MeshBasicMaterial() );
 	brush2 = new Brush( new THREE.BoxGeometry(), new THREE.MeshBasicMaterial() );
-	// brush2.position.set( - 0.0, 0.75, 1 );
 	brush2.position.set( - 0.0, 0.75, 0 );
 	brush2.scale.setScalar( 0.75 );
 
-	brush2.geometry = new THREE.BoxGeometry( 0.5, 0.5, 1 );
-	// brush2.geometry = new THREE.ConeGeometry( 0.5, 1, 16 );
-	// brush2.rotation.x = Math.PI/2;
-	// brush2.position.z = -0.3;
-
-	brush1.geometry = new THREE.BoxGeometry( 5, 5, 0.3 );
+	updateBrush( brush1, "box", 5, 5, 0.3);
+	updateBrush( brush2, "box", 0.5, 0.5, 1);
 
 	// initialize materials
 	brush1.material.opacity = 0.15;
@@ -166,6 +144,53 @@ async function init() {
 	trisHelper2 = new TriangleSetHelper();
 	trisHelper2.color.set( 0xD4BC00 ).convertSRGBToLinear();
 	scene.add( trisHelper2 );
+
+	// gui
+	gui = new GUI();
+	gui.add( params, 'brushShape', [ 'box', 'cone' ] ).name( 'shape' ).onChange( v => {
+ 		if (params.brushShape == "box") {
+			updateBrush( brush2, "box", 0.5, 0.5, 1);
+		} else {
+			updateBrush( brush2, "cone", 0.5, 1, 16);
+		}
+	});
+}
+
+
+function updateBrush( brush, type, v1, v2, v3 ) {
+
+	brush.geometry.dispose();
+	switch ( type ) {
+		case 'cone':
+			brush.geometry = new THREE.ConeGeometry( v1, v2, v3 );
+			break;
+		case 'box':
+			brush.geometry = new THREE.BoxGeometry( v1, v2, v3 );
+			break;
+	}
+
+	brush.geometry = brush.geometry.toNonIndexed();
+
+	const position = brush.geometry.attributes.position;
+	const array = new Float32Array( position.count * 3 );
+	for ( let i = 0, l = array.length; i < l; i += 9 ) {
+
+		array[ i + 0 ] = 1;
+		array[ i + 1 ] = 0;
+		array[ i + 2 ] = 0;
+
+		array[ i + 3 ] = 0;
+		array[ i + 4 ] = 1;
+		array[ i + 5 ] = 0;
+
+		array[ i + 6 ] = 0;
+		array[ i + 7 ] = 0;
+		array[ i + 8 ] = 1;
+
+	}
+
+	brush.geometry.setAttribute( 'color', new THREE.BufferAttribute( array, 3 ) );
+	needsUpdate = true;
 }
 
 function render() {
@@ -173,18 +198,11 @@ function render() {
 	world.step();
 	let position = brushRigidBody.translation();
 
-	// if (brush1.position.clone().sub(position).length() > 0.01) {
-	// 	needsUpdate = true;
-	// }
-
-	// brush1.position.set(position.x, position.y, position.z);
-	// brush1_w.position.set(position.x, position.y, position.z);
-	// console.log("position", brush1.position);
-
 	brush1.updateMatrixWorld(true);
 	brush1_w.updateMatrixWorld(true);
 	brush2.updateMatrixWorld(true);
 
+	// physics update
 	for (let i = 0; i < scene.children.length; i++) {
 		if (scene.children[i].type == "Mesh" &&
 			!scene.children[i].isBrush &&
@@ -205,15 +223,16 @@ function render() {
 
 		needsUpdate = false;
 
-		// brush1.position.set(0, 0, 0);
-		// brush1_w.position.set(0, 0, 0);
-
 		console.log("init", brush1.clone());
 
 		const startTime = window.performance.now();
 		csgEvaluator.debug.enabled = true;
 		csgEvaluator.useGroups = true;
 		csgEvaluator.evaluate( brush1, brush2, SUBTRACTION, resultObject );
+
+
+		console.log("result", resultObject.clone())
+
 
 		// let check_geom = resultObject.geometry.clone();
 		// check_geom.attributes.position.array.slice(check_geom.drawRange.start*3, check_geom.drawRange.count*3);
@@ -230,6 +249,9 @@ function render() {
 		check_geom.deleteAttribute('uv');
 		check_geom = BufferGeometryUtils.mergeVertices(check_geom, 1e-5);
 
+		// console.log("mergeVertices", brush1.clone());
+		// console.log("before split_mesh_islands", check_geom.clone())
+
 		let new_geoms = split_mesh_islands(check_geom);
 
 		let largest_component_size = -1;
@@ -244,7 +266,7 @@ function render() {
 				largest_component_i = i;
 			}
 		}
-		console.log("new_geoms", new_geoms)
+		console.log("new_geoms", new_geoms, largest_component_size, largest_component_i)
 
 
 		for (let i = 0; i < new_geoms.length; i++) {
@@ -257,7 +279,8 @@ function render() {
 				world.removeCollider(brushCollider)
 				brushCollider = world.createCollider(newColliderDesc, brushRigidBody);
 
-			} else {
+			} else if (new_geoms[i].attributes.position.array.length >= 9) {
+
 				const color = new THREE.Color();
 				color.setRGB(
 					Math.random(),
@@ -273,6 +296,9 @@ function render() {
 				let new_mesh = new THREE.Mesh(new_geoms[i], material);
 
 				let newRigidBody = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic());
+
+				// console.log("new_geoms[i].attributes.position.array", i, new_geoms[i].attributes.position.array)
+
 				let newColliderDesc = RAPIER.ColliderDesc.convexHull(new_geoms[i].attributes.position.array)
 				world.createCollider(newColliderDesc, newRigidBody);
 				new_mesh.rigidBody = newRigidBody;
@@ -342,6 +368,8 @@ function isTriDegenerate(tri) {
 
 function split_mesh_islands(check_geom) {
 
+	console.log("split_mesh_islands", check_geom.clone())
+
 	let parents = [];
 	let new_geoms = [];
 
@@ -355,7 +383,7 @@ function split_mesh_islands(check_geom) {
 		tri.c.fromBufferAttribute(check_geom.attributes.position, v_index[2]);
 		if (isTriDegenerate(tri)) {
 			console.warn("isTriDegenerate", i, tri);
-			continue;
+			// continue;
 		}
 		union(parents, check_geom.index.array[i], check_geom.index.array[i+1]);
 		union(parents, check_geom.index.array[i+1], check_geom.index.array[i+2]);
@@ -365,13 +393,13 @@ function split_mesh_islands(check_geom) {
 	for (let i = 0; i < parents.length; i++) {
 		parents[i] = find(parents, parents[i]);
 	}
-	// console.log("check_geom", check_geom)
-	// console.log("parents", check_geom.index.array.length, parents)
+	console.log("check_geom", check_geom.clone())
+	console.log("parents", check_geom.index.array.length, parents)
 
 	for (let i = 0; i < parents.length; i++) {
-		if (parents[i] < 0) {
+		if (parents[i] < 0 && Math.abs(parents[i]) >= 9) {
 
-			// console.log("component", i, parents[i]);
+			console.log("component", i, parents[i]);
 
 			let new_geom = new THREE.BufferGeometry();
 			let vertices = [];

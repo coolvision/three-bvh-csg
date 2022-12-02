@@ -21,31 +21,7 @@ import {
 window.logTriangleDefinitions = logTriangleDefinitions;
 
 const params = {
-
 	brush1Shape: 'box',
-	brush1Complexity: 1,
-	brush1Color: '#ffffff',
-
-	brush2Shape: 'sphere',
-	brush2Complexity: 1,
-	brush2Color: '#E91E63',
-
-	operation: SUBTRACTION,
-	wireframe: false,
-	displayBrushes: true,
-	displayControls: true,
-	shadows: true,
-	vertexColors: false,
-	flatShading: false,
-	gridTexture: false,
-	useGroups: true,
-
-	enableDebugTelemetry: true,
-	displayIntersectionEdges: false,
-	displayTriangleIntersections: false,
-	displayBrush1BVH: false,
-	displayBrush2BVH: false,
-
 };
 
 let renderer, camera, scene, gui, outputContainer;
@@ -512,6 +488,3 @@ function render() {
 	renderer.render( scene, camera );
 
 }
-
-
-

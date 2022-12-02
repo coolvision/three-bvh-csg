@@ -243,7 +243,7 @@ export function getOperationAction( operation, hitSide, invert = false ) {
 
 			} else {
 
-				if ( hitSide === FRONT_SIDE ) {
+				if ( hitSide === FRONT_SIDE || hitSide ===  COPLANAR) {
 
 					return ADD_TRI;
 

@@ -45,6 +45,7 @@
   },
   "homepage": "https://github.com/gkjohnson/three-bvh-csg#readme",
   "peerDependencies": {
+    "@dimforge/rapier3d-compat": "^0.10.0",
     "three": "^0.141.0",
     "three-mesh-bvh": "^0.5.13"
   },

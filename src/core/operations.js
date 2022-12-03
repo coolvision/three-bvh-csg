@@ -7,6 +7,7 @@ import {
 	getOperationAction,
 	SKIP_TRI, ADD_TRI, INVERT_TRI,
 } from './operationsUtils.js';
+import { isTriDegenerate } from './TriangleSplitter.js';
 
 const _matrix = new Matrix4();
 const _normalMatrix = new Matrix3();
@@ -34,11 +35,11 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
 	performWholeTriangleOperations( a, b, aIntersections, operation, false, typedAttributeData, groupOffset );
-	// performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, typedAttributeData, groupOffset );
+	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, typedAttributeData, groupOffset );
 
 	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
 	performWholeTriangleOperations( b, a, bIntersections, operation, true, typedAttributeData, groupOffset );
-	// performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, typedAttributeData, groupOffset );
+	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, typedAttributeData, groupOffset );
 
 	return {
 		groups: resultGroups,
@@ -198,10 +199,11 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 		_tri.a.fromBufferAttribute( aPosition, i0 ).applyMatrix4( _matrix );
 		_tri.b.fromBufferAttribute( aPosition, i1 ).applyMatrix4( _matrix );
 		_tri.c.fromBufferAttribute( aPosition, i2 ).applyMatrix4( _matrix );
+		if (isTriDegenerate(_tri)) continue;
 
 		// get the side and decide if we need to cull the triangle based on the operation
 		const hitSide = getHitSide( _tri, bBVH );
-		const action = getOperationAction( operation, hitSide, invert );
+		let action = getOperationAction( operation, hitSide, invert );
 		while ( stack.length > 0 ) {
 
 			const currId = stack.pop();

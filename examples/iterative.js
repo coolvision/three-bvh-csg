@@ -48,6 +48,8 @@ const params = {
 
 async function init() {
 
+	console.log("geometry", new THREE.ConeGeometry( 1, 1, 3 ));
+
 	await getRapier();
 
 	world = new RAPIER.World({ x: 0.0, y: -9.81, z: 0.0 });
@@ -107,7 +109,7 @@ async function init() {
 	brush2.position.z=0.2;
 
 	updateBrush( brush1, "box", 5, 5, 0.3);
-	updateBrush( brush2, "cone", 0.2, 1, 16);
+	updateBrush( brush2, "cone", 0.2, 1, 3);
 
 	// initialize materials
 	brush1.material.opacity = 0.15;
@@ -154,7 +156,7 @@ async function init() {
  		if (params.brushShape == "box") {
 			updateBrush( brush2, "box", 0.5, 0.5, 1);
 		} else {
-			updateBrush( brush2, "cone", 0.2, 1, 16);
+			updateBrush( brush2, "cone", 0.2, 1, 4);
 		}
 	});
 }
@@ -174,25 +176,25 @@ function updateBrush( brush, type, v1, v2, v3 ) {
 
 	brush.geometry = brush.geometry.toNonIndexed();
 
-	const position = brush.geometry.attributes.position;
-	const array = new Float32Array( position.count * 3 );
-	for ( let i = 0, l = array.length; i < l; i += 9 ) {
-
-		array[ i + 0 ] = 1;
-		array[ i + 1 ] = 0;
-		array[ i + 2 ] = 0;
-
-		array[ i + 3 ] = 0;
-		array[ i + 4 ] = 1;
-		array[ i + 5 ] = 0;
-
-		array[ i + 6 ] = 0;
-		array[ i + 7 ] = 0;
-		array[ i + 8 ] = 1;
-
-	}
-
-	brush.geometry.setAttribute( 'color', new THREE.BufferAttribute( array, 3 ) );
+	// const position = brush.geometry.attributes.position;
+	// const array = new Float32Array( position.count * 3 );
+	// for ( let i = 0, l = array.length; i < l; i += 9 ) {
+	//
+	// 	array[ i + 0 ] = 1;
+	// 	array[ i + 1 ] = 0;
+	// 	array[ i + 2 ] = 0;
+	//
+	// 	array[ i + 3 ] = 0;
+	// 	array[ i + 4 ] = 1;
+	// 	array[ i + 5 ] = 0;
+	//
+	// 	array[ i + 6 ] = 0;
+	// 	array[ i + 7 ] = 0;
+	// 	array[ i + 8 ] = 1;
+	//
+	// }
+	//
+	// brush.geometry.setAttribute( 'color', new THREE.BufferAttribute( array, 3 ) );
 	needsUpdate = true;
 }
 
@@ -226,7 +228,8 @@ function render() {
 
 		needsUpdate = false;
 
-		console.log("init", brush1.clone());
+		console.log("init brush1", brush1.clone());
+		console.log("init brush2", brush2.clone());
 
 		const startTime = window.performance.now();
 		csgEvaluator.debug.enabled = true;

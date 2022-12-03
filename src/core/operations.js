@@ -34,11 +34,11 @@ export function performOperation( a, b, operation, splitter, typedAttributeData,
 	let groupOffset;
 	groupOffset = useGroups ? 0 : - 1;
 	performWholeTriangleOperations( a, b, aIntersections, operation, false, typedAttributeData, groupOffset );
-	performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, typedAttributeData, groupOffset );
+	// performSplitTriangleOperations( a, b, aIntersections, operation, false, splitter, typedAttributeData, groupOffset );
 
 	groupOffset = useGroups ? a.geometry.groups.length || 1 : - 1;
 	performWholeTriangleOperations( b, a, bIntersections, operation, true, typedAttributeData, groupOffset );
-	performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, typedAttributeData, groupOffset );
+	// performSplitTriangleOperations( b, a, bIntersections, operation, true, splitter, typedAttributeData, groupOffset );
 
 	return {
 		groups: resultGroups,
@@ -242,4 +242,3 @@ function performWholeTriangleOperations( a, b, splitTriSet, operation, invert, a
 	}
 
 }
-

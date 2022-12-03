@@ -43,7 +43,7 @@ function getRapier() {
 init();
 
 const params = {
-	brushShape: 'box',
+	brushShape: 'cone',
 };
 
 async function init() {
@@ -103,9 +103,11 @@ async function init() {
 	brush2 = new Brush( new THREE.BoxGeometry(), new THREE.MeshBasicMaterial() );
 	brush2.position.set( - 0.0, 0.75, 0 );
 	brush2.scale.setScalar( 0.75 );
+	brush2.rotation.x=-Math.PI/2 - Math.PI/4;
+	brush2.position.z=0.2;
 
 	updateBrush( brush1, "box", 5, 5, 0.3);
-	updateBrush( brush2, "box", 0.5, 0.5, 1);
+	updateBrush( brush2, "cone", 0.2, 1, 16);
 
 	// initialize materials
 	brush1.material.opacity = 0.15;
@@ -125,9 +127,10 @@ async function init() {
 	brush1_w.material.wireframe = true;
 	scene.add( brush1_w );
 
-	transformControls.attach( brush2 );
+	// transformControls.attach( brush2 );
 
-	scene.add( brush1, brush2 );
+	// scene.add( brush1, brush2 );
+	scene.add( brush1 );
 
 	// add object displaying the result
 	resultObject = new THREE.Mesh( new THREE.BufferGeometry(), new THREE.MeshBasicMaterial() );
@@ -151,7 +154,7 @@ async function init() {
  		if (params.brushShape == "box") {
 			updateBrush( brush2, "box", 0.5, 0.5, 1);
 		} else {
-			updateBrush( brush2, "cone", 0.5, 1, 16);
+			updateBrush( brush2, "cone", 0.2, 1, 16);
 		}
 	});
 }
@@ -203,21 +206,21 @@ function render() {
 	brush2.updateMatrixWorld(true);
 
 	// physics update
-	for (let i = 0; i < scene.children.length; i++) {
-		if (scene.children[i].type == "Mesh" &&
-			!scene.children[i].isBrush &&
-			scene.children[i].hasOwnProperty("rigidBody")) {
-
-			let position = scene.children[i].rigidBody.translation();
-			scene.children[i].position.set(position.x, position.y, position.z);
-
-			let rotation = scene.children[i].rigidBody.rotation();
-			scene.children[i].setRotationFromQuaternion(
-				new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
-
-			scene.children[i].updateMatrixWorld(true);
-		}
-	}
+	// for (let i = 0; i < scene.children.length; i++) {
+	// 	if (scene.children[i].type == "Mesh" &&
+	// 		!scene.children[i].isBrush &&
+	// 		scene.children[i].hasOwnProperty("rigidBody")) {
+	//
+	// 		let position = scene.children[i].rigidBody.translation();
+	// 		scene.children[i].position.set(position.x, position.y, position.z);
+	//
+	// 		let rotation = scene.children[i].rigidBody.rotation();
+	// 		scene.children[i].setRotationFromQuaternion(
+	// 			new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w));
+	//
+	// 		scene.children[i].updateMatrixWorld(true);
+	// 	}
+	// }
 
 	if ( needsUpdate ) {
 
@@ -234,81 +237,81 @@ function render() {
 		console.log("result", resultObject.clone())
 
 
-		// let check_geom = resultObject.geometry.clone();
-		// check_geom.attributes.position.array.slice(check_geom.drawRange.start*3, check_geom.drawRange.count*3);
-		// check_geom.attributes.position.count = check_geom.drawRange.count;
-		// brush1.geometry = check_geom;
-		// brush1_w.geometry = check_geom;
-		// console.log("check_geom", brush1.clone());
-
 		let check_geom = resultObject.geometry.clone();
 		check_geom.attributes.position.array.slice(check_geom.drawRange.start*3, check_geom.drawRange.count*3);
 		check_geom.attributes.position.count = check_geom.drawRange.count;
+		brush1.geometry = check_geom;
+		brush1_w.geometry = check_geom;
+		console.log("check_geom", brush1.clone());
 
-		check_geom.deleteAttribute('normal');
-		check_geom.deleteAttribute('uv');
-		check_geom = BufferGeometryUtils.mergeVertices(check_geom, 1e-5);
+		// let check_geom = resultObject.geometry.clone();
+		// check_geom.attributes.position.array.slice(check_geom.drawRange.start*3, check_geom.drawRange.count*3);
+		// check_geom.attributes.position.count = check_geom.drawRange.count;
+		//
+		// check_geom.deleteAttribute('normal');
+		// check_geom.deleteAttribute('uv');
+		// check_geom = BufferGeometryUtils.mergeVertices(check_geom, 1e-5);
+		//
+		// // console.log("mergeVertices", brush1.clone());
+		// // console.log("before split_mesh_islands", check_geom.clone())
+		//
+		// let new_geoms = split_mesh_islands(check_geom);
+		//
+		// let largest_component_size = -1;
+		// let largest_component_i = -1;
+		// for (let i = 0; i < new_geoms.length; i++) {
+ 		// 	new_geoms[i].computeBoundingBox();
+		// 	console.log("new_geoms[i].boundingBox", new_geoms[i].boundingBox);
+		// 	let size = new_geoms[i].boundingBox.max.sub(new_geoms[i].boundingBox.min);
+		// 	console.log("size", size, i);
+		// 	if (size.x + size.y + size.z > largest_component_size) {
+		// 		largest_component_size = size.x + size.y + size.z;
+		// 		largest_component_i = i;
+		// 	}
+		// }
+		// console.log("new_geoms", new_geoms, largest_component_size, largest_component_i)
+		//
+		//
+		// for (let i = 0; i < new_geoms.length; i++) {
+		// 	if (i == largest_component_i) {
+		// 		brush1.geometry = new_geoms[i];
+		// 		brush1_w.geometry = new_geoms[i];
+		//
+		// 		// update collider after mesh modification
+		// 		let newColliderDesc = RAPIER.ColliderDesc.convexHull(brush1.geometry.attributes.position.array)
+		// 		world.removeCollider(brushCollider)
+		// 		brushCollider = world.createCollider(newColliderDesc, brushRigidBody);
+		//
+		// 	} else if (new_geoms[i].attributes.position.array.length >= 9) {
+		//
+		// 		const color = new THREE.Color();
+		// 		color.setRGB(
+		// 			Math.random(),
+		// 			Math.random(),
+		// 			Math.random(),
+		// 		);
+		// 		const material = new THREE.MeshBasicMaterial( {
+		// 			color: color,
+		// 			side: THREE.DoubleSide,
+		// 			opacity: 0.15,
+		// 			transparent: true,
+		// 		} );
+		// 		let new_mesh = new THREE.Mesh(new_geoms[i], material);
+		//
+		// 		let newRigidBody = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic());
+		//
+		// 		// console.log("new_geoms[i].attributes.position.array", i, new_geoms[i].attributes.position.array)
+		//
+		// 		// let newColliderDesc = RAPIER.ColliderDesc.convexHull(new_geoms[i].attributes.position.array)
+		// 		// world.createCollider(newColliderDesc, newRigidBody);
+		// 		// new_mesh.rigidBody = newRigidBody;
+		//
+		// 		scene.add(new_mesh);
+		// 		new_mesh.position.copy(brush1.position);
+		// 	}
+		// }
 
-		// console.log("mergeVertices", brush1.clone());
-		// console.log("before split_mesh_islands", check_geom.clone())
-
-		let new_geoms = split_mesh_islands(check_geom);
-
-		let largest_component_size = -1;
-		let largest_component_i = -1;
-		for (let i = 0; i < new_geoms.length; i++) {
- 			new_geoms[i].computeBoundingBox();
-			console.log("new_geoms[i].boundingBox", new_geoms[i].boundingBox);
-			let size = new_geoms[i].boundingBox.max.sub(new_geoms[i].boundingBox.min);
-			console.log("size", size, i);
-			if (size.x + size.y + size.z > largest_component_size) {
-				largest_component_size = size.x + size.y + size.z;
-				largest_component_i = i;
-			}
-		}
-		console.log("new_geoms", new_geoms, largest_component_size, largest_component_i)
-
-
-		for (let i = 0; i < new_geoms.length; i++) {
-			if (i == largest_component_i) {
-				brush1.geometry = new_geoms[i];
-				brush1_w.geometry = new_geoms[i];
-
-				// update collider after mesh modification
-				let newColliderDesc = RAPIER.ColliderDesc.convexHull(brush1.geometry.attributes.position.array)
-				world.removeCollider(brushCollider)
-				brushCollider = world.createCollider(newColliderDesc, brushRigidBody);
-
-			} else if (new_geoms[i].attributes.position.array.length >= 9) {
-
-				const color = new THREE.Color();
-				color.setRGB(
-					Math.random(),
-					Math.random(),
-					Math.random(),
-				);
-				const material = new THREE.MeshBasicMaterial( {
-					color: color,
-					side: THREE.DoubleSide,
-					opacity: 0.15,
-					transparent: true,
-				} );
-				let new_mesh = new THREE.Mesh(new_geoms[i], material);
-
-				let newRigidBody = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic());
-
-				// console.log("new_geoms[i].attributes.position.array", i, new_geoms[i].attributes.position.array)
-
-				let newColliderDesc = RAPIER.ColliderDesc.convexHull(new_geoms[i].attributes.position.array)
-				world.createCollider(newColliderDesc, newRigidBody);
-				new_mesh.rigidBody = newRigidBody;
-
-				scene.add(new_mesh);
-				new_mesh.position.copy(brush1.position);
-			}
-		}
-
-		// edgesHelper.setEdges( csgEvaluator.debug.intersectionEdges );
+		edgesHelper.setEdges( csgEvaluator.debug.intersectionEdges );
 		// trisHelper.setTriangles( [
 		// 	...csgEvaluator.debug.triangleIntersectsA.getTrianglesAsArray(),
 		// 	...csgEvaluator.debug.triangleIntersectsA.getIntersectionsAsArray()
@@ -354,7 +357,7 @@ function union(parents, x, y) {
 	}
 }
 
-const EPSILON$1 = 1e-8;
+const EPSILON$1 = 1e-10;
 const _tmp1 = new THREE.Vector3();
 const _tmp2 = new THREE.Vector3();
 function isTriDegenerate(tri) {
@@ -393,13 +396,13 @@ function split_mesh_islands(check_geom) {
 	for (let i = 0; i < parents.length; i++) {
 		parents[i] = find(parents, parents[i]);
 	}
-	console.log("check_geom", check_geom.clone())
-	console.log("parents", check_geom.index.array.length, parents)
+	// console.log("check_geom", check_geom.clone())
+	// console.log("parents", check_geom.index.array.length, parents)
 
 	for (let i = 0; i < parents.length; i++) {
 		if (parents[i] < 0 && Math.abs(parents[i]) >= 9) {
 
-			console.log("component", i, parents[i]);
+			// console.log("component", i, parents[i]);
 
 			let new_geom = new THREE.BufferGeometry();
 			let vertices = [];
@@ -446,19 +449,19 @@ window.addEventListener( 'keydown', function ( e ) {
 			transformControls.setMode( 'scale' );
 			break;
 		case 'ArrowLeft':
-			brush2.position.x -= 0.2;
+			brush2.position.x -= 0.025;
 			needsUpdate = true;
 			break;
 		case 'ArrowRight':
-			brush2.position.x += 0.2;
+			brush2.position.x += 0.025;
 			needsUpdate = true;
 			break;
 		case 'ArrowUp':
-			brush2.position.y += 0.1;
+			brush2.position.y += 0.025;
 			needsUpdate = true;
 			break;
 		case 'ArrowDown':
-			brush2.position.y -= 0.1;
+			brush2.position.y -= 0.025;
 			needsUpdate = true;
 			break;
 		case 'KeyU':

@@ -52,6 +52,20 @@ class TriangleIntersectionSets {
 
 	}
 
+	addTriangleIntersection2( ia, triA, ib, triB ) {
+
+		const { data } = this;
+		if ( ! data[ ia ] ) {
+
+			data[ ia ] = new TriangleIntersectData( triA );
+
+		}
+
+		// data[ ia ].addTriangle( ib, triB );
+
+	}
+
+
 	getTrianglesAsArray( id = null ) {
 
 		const { data } = this;
@@ -177,8 +191,11 @@ export class OperationDebugData {
 	addIntersectingTriangles( ia, triA, ib, triB ) {
 
 		const { triangleIntersectsA, triangleIntersectsB } = this;
-		triangleIntersectsA.addTriangleIntersection( ia, triA, ib, triB );
-		triangleIntersectsB.addTriangleIntersection( ib, triB, ia, triA );
+		//triangleIntersectsA.addTriangleIntersection( ia, triA, ib, triB );
+		//triangleIntersectsB.addTriangleIntersection( ib, triB, ia, triA );
+		triangleIntersectsA.addTriangleIntersection2( ia, triA, ib, triB );
+		triangleIntersectsB.addTriangleIntersection2( ib, triB, ia, triA );
+
 
 	}
 
